@@ -1,0 +1,300 @@
+﻿<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PokeBistro - Painel Admin</title>
+    <link rel="icon" href="data:,">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --poke-red: #ef5350;
+            --poke-dark: #2c3e50;
+        }
+
+        body {
+            background-color: #f4f7f6;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .navbar {
+            background-color: var(--poke-red) !important;
+            border-bottom: 4px solid #b71c1c;
+        }
+
+        .card {
+            border: none;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+        }
+
+        .btn-success {
+            background-color: #2ecc71;
+            border: none;
+        }
+
+        .edit-mode {
+            border: 2px solid #f1c40f !important;
+            background-color: #fffde7 !important;
+        }
+
+        #loginSection {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .nav-link {
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SEÇÃO DE LOGIN -->
+    <div id="loginSection" class="container">
+        <div class="card shadow-lg p-4" style="max-width: 400px; width: 100%;">
+            <div class="text-center mb-4">
+                <i class="bi bi-egg-fried text-danger" style="font-size: 3rem;"></i>
+                <h3 class="fw-bold">PokeBistro Login</h3>
+            </div>
+            <form id="formLogin">
+                <div class="mb-3">
+                    <label class="form-label text-secondary fw-bold">Usuário</label>
+                    <input type="text" id="loginUser" class="form-control" required placeholder="admin">
+                </div>
+                <div class="mb-4">
+                    <label class="form-label text-secondary fw-bold">Senha</label>
+                    <input type="password" id="loginPass" class="form-control" required placeholder="123456">
+                </div>
+                <button type="submit" class="btn btn-danger w-100 py-2 fw-bold shadow-sm">ENTRAR</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- PAINEL ADMINISTRATIVO -->
+    <div id="adminPanel" class="hidden">
+        <nav class="navbar navbar-dark navbar-expand-lg shadow mb-4">
+            <div class="container">
+                <a class="navbar-brand fw-bold" href="#"><i class="bi bi-poda-ball me-2"></i>Admin</a>
+                <div class="navbar-nav me-auto">
+                    <a class="nav-link active" onclick="switchTab('cardapio', event)">Cardápio</a>
+                    <a class="nav-link" onclick="switchTab('pedidos', event)">Pedidos</a>
+                </div>
+                <button class="btn btn-outline-light btn-sm fw-bold" onclick="logout()">Sair <i class="bi bi-box-arrow-right ms-1"></i></button>
+            </div>
+        </nav>
+
+        <div class="container">
+            <!-- ABA CARDÁPIO -->
+            <div id="tab-cardapio">
+                <div class="card shadow-sm" id="cardForm">
+                    <div class="card-body p-4">
+                        <h5 class="card-title mb-4" id="formTitle"><i class="bi bi-plus-circle me-2"></i>Novo Prato</h5>
+                        <form id="formCardapio" class="row g-3">
+                            <input type="hidden" id="idPrato">
+                            <div class="col-12 col-md-4">
+                                <label class="form-label fw-bold small text-uppercase">Nome</label>
+                                <input type="text" id="nome" class="form-control" required>
+                            </div>
+                            <div class="col-12 col-md-5">
+                                <label class="form-label fw-bold small text-uppercase">Descrição</label>
+                                <input type="text" id="descricao" class="form-control" required>
+                            </div>
+                            <div class="col-12 col-sm-8 col-md-2">
+                                <label class="form-label fw-bold small text-uppercase">Preço</label>
+                                <input type="number" id="preco" class="form-control" step="0.01" required>
+                            </div>
+                            <div class="col-12 col-sm-4 col-md-1 d-flex align-items-end">
+                                <button type="submit" class="btn btn-success w-100 py-2 shadow-sm"><i class="bi bi-check-lg"></i></button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-dark">
+                                <tr><th class="ps-4">ID</th><th>Nome</th><th>Descrição</th><th>Preço</th><th class="text-center">Ações</th></tr>
+                            </thead>
+                            <tbody id="tabelaCardapio"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ABA PEDIDOS -->
+            <div id="tab-pedidos" class="hidden">
+                <div class="card shadow-sm p-4">
+                    <h5 class="mb-4"><i class="bi bi-cart-check me-2"></i>Pedidos Realizados</h5>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead class="table-dark">
+                                <tr><th>#</th><th>Cliente</th><th>Data</th><th>Status</th></tr>
+                            </thead>
+                            <tbody id="tabelaPedidos"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const BASE_URL = "https://localhost:7151/api";
+
+        // Login
+        document.getElementById('formLogin').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const payload = { usuario: document.getElementById('loginUser').value, senha: document.getElementById('loginPass').value };
+            try {
+                const res = await fetch(`${BASE_URL}/Auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    localStorage.setItem('pokeToken', data.token);
+                    initAdmin();
+                } else { alert("Login Inválido!"); }
+            } catch (err) { alert("Erro de conexão com o servidor."); }
+        });
+
+        function initAdmin() {
+            const token = localStorage.getItem('pokeToken');
+            if (!token) return;
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('adminPanel').classList.remove('hidden');
+            carregarCardapio();
+            carregarPedidos();
+        }
+
+        function logout() {
+            localStorage.removeItem('pokeToken');
+            location.reload();
+        }
+
+        function switchTab(tab, event) {
+            document.getElementById('tab-cardapio').classList.toggle('hidden', tab !== 'cardapio');
+            document.getElementById('tab-pedidos').classList.toggle('hidden', tab !== 'pedidos');
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+            if (event) event.target.classList.add('active');
+        }
+
+        // Carregar Itens do Cardápio
+        async function carregarCardapio() {
+            const tbody = document.getElementById('tabelaCardapio');
+            if (!tbody) return;
+
+            tbody.innerHTML = ""; // Limpa a tabela antes de preencher
+
+            try {
+                const res = await fetch(`${BASE_URL}/Cardapio`, {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('pokeToken')}` }
+                });
+                if (res.status === 401) logout();
+                const pratos = await res.json();
+
+                tbody.innerHTML = pratos.map(p => `
+                        <tr>
+                            <td class="ps-4">#${p.idCardapio}</td>
+                            <td class="fw-bold">${p.nome}</td>
+                            <td>${p.descricao}</td>
+                            <td class="text-primary fw-bold">R$ ${p.preco.toFixed(2)}</td>
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-outline-warning" onclick="prepararEdicao(${p.idCardapio}, '${p.nome}', '${p.descricao}', ${p.preco})"><i class="bi bi-pencil"></i></button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="excluirPrato(${p.idCardapio})"><i class="bi bi-trash"></i></button>
+                            </td>
+                        </tr>`).join('');
+            } catch (err) { console.error("Erro ao carregar cardápio:", err); }
+        }
+
+        // Salvar/Editar Prato
+        document.getElementById('formCardapio').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('idPrato').value;
+            const payload = {
+                nome: document.getElementById('nome').value,
+                descricao: document.getElementById('descricao').value,
+                preco: parseFloat(document.getElementById('preco').value)
+            };
+            const method = id ? 'PUT' : 'POST';
+            const url = id ? `${BASE_URL}/Cardapio/${id}` : `${BASE_URL}/Cardapio`;
+            if (id) payload.idCardapio = parseInt(id);
+
+            try {
+                await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('pokeToken')}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+                cancelarEdicao();
+                carregarCardapio();
+            } catch (err) { alert("Erro ao salvar prato."); }
+        });
+
+        async function excluirPrato(id) {
+            if (!confirm("Deseja realmente excluir este prato?")) return;
+            try {
+                await fetch(`${BASE_URL}/Cardapio/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('pokeToken')}` }
+                });
+                carregarCardapio();
+            } catch (err) { alert("Erro ao excluir."); }
+        }
+
+        // Carregar Pedidos
+        async function carregarPedidos() {
+            const tbody = document.getElementById('tabelaPedidos');
+            if (!tbody) return;
+
+            tbody.innerHTML = ""; // Limpa a tabela antes de preencher
+
+            try {
+                const res = await fetch(`${BASE_URL}/Pedido`, {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('pokeToken')}` }
+                });
+                const pedidos = await res.json();
+                tbody.innerHTML = pedidos.map(p => `
+                        <tr>
+                            <td>#${p.idPedido}</td>
+                            <td>${p.cliente ? p.cliente.nome : 'Anônimo'}</td>
+                            <td>${new Date(p.dataPedido).toLocaleDateString()}</td>
+                            <td><span class="badge bg-info">${p.statusPedido || 'Pendente'}</span></td>
+                        </tr>`).join('');
+            } catch (e) { console.error("Erro ao carregar pedidos:", e); }
+        }
+
+        function prepararEdicao(id, nome, desc, preco) {
+            document.getElementById('idPrato').value = id;
+            document.getElementById('nome').value = nome;
+            document.getElementById('descricao').value = desc;
+            document.getElementById('preco').value = preco;
+            document.getElementById('cardForm').classList.add('edit-mode');
+            document.getElementById('formTitle').innerText = "Editando Prato";
+        }
+
+        function cancelarEdicao() {
+            document.getElementById('formCardapio').reset();
+            document.getElementById('idPrato').value = "";
+            document.getElementById('cardForm').classList.remove('edit-mode');
+            document.getElementById('formTitle').innerText = "Novo Prato";
+        }
+
+        // Verifica login ao carregar
+        if (localStorage.getItem('pokeToken')) initAdmin();
+    </script>
+</body>
+</html>
