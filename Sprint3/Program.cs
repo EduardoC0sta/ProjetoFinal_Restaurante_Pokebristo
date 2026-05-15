@@ -63,7 +63,11 @@ builder.Services.AddScoped<ICardapioRepository, CardapioRepository>();
 builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
 builder.Services.AddScoped<IFuncionarioRepository, FuncionarioRepository>();
 builder.Services.AddScoped<IPedidoRepository, PedidoRepository>();
+
+// Adição obrigatória dos Services para a arquitetura robusta funcionar
 builder.Services.AddScoped<CardapioService>();
+builder.Services.AddScoped<FuncionarioService>();
+builder.Services.AddScoped<PedidoService>();
 
 // 6. BANCO DE DADOS
 var connectionString = builder.Configuration.GetConnectionString("RestauranteConnection");

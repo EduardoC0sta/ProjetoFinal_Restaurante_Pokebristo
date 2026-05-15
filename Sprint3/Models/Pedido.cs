@@ -29,5 +29,7 @@ namespace Sprint3.Models
 
         [Column("status_pedido")]
         public string? StatusPedido { get; set; }
+
+        public virtual ICollection<ItemPedido> Itens { get; set; } = new List<ItemPedido>();
     }
 }

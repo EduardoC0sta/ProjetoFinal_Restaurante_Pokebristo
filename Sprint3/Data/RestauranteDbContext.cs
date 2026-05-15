@@ -11,6 +11,7 @@ namespace Sprint3.Data
         public DbSet<Cliente> Clientes { get; set; }
         public DbSet<Funcionario> Funcionarios { get; set; }
         public DbSet<Pedido> Pedidos { get; set; }
+        public DbSet<ItemPedido> ItensPedido { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -18,6 +19,7 @@ namespace Sprint3.Data
             modelBuilder.Entity<Cliente>().ToTable("cliente");
             modelBuilder.Entity<Funcionario>().ToTable("funcionario");
             modelBuilder.Entity<Pedido>().ToTable("pedido");
+            modelBuilder.Entity<ItemPedido>().ToTable("item_pedido");
         }
     }
 }

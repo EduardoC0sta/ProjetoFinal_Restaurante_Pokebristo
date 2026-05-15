@@ -3,7 +3,7 @@ DROP DATABASE IF EXISTS restaurante;
 CREATE DATABASE restaurante;
 USE restaurante;
 
--- 2. TABELA DE CARDÁPIO (Pokémon Edition)
+-- 2. TABELA DE CARDÁPIO
 CREATE TABLE cardapio (
     id_cardapio INT NOT NULL AUTO_INCREMENT,
     nome VARCHAR(40) NOT NULL,
@@ -20,7 +20,7 @@ CREATE TABLE cliente (
     PRIMARY KEY (id_cliente)
 ) ENGINE=InnoDB;
 
--- 4. TABELA DE FUNCIONÁRIOS (Precisa vir ANTES de Pedidos)
+-- 4. TABELA DE FUNCIONÁRIOS
 CREATE TABLE funcionario (
     id_funcionario INT NOT NULL AUTO_INCREMENT,
     nome LONGTEXT NOT NULL,
@@ -30,7 +30,7 @@ CREATE TABLE funcionario (
     PRIMARY KEY (id_funcionario)
 ) ENGINE=InnoDB;
 
--- 5. TABELA DE PEDIDOS (Agora pode se conectar aos Clientes e Funcionários)
+-- 5. TABELA DE PEDIDOS
 CREATE TABLE pedido (
     id_pedido INT NOT NULL AUTO_INCREMENT,
     id_cliente INT NOT NULL,
@@ -40,6 +40,17 @@ CREATE TABLE pedido (
     PRIMARY KEY (id_pedido),
     CONSTRAINT fk_cliente_pedido FOREIGN KEY (id_cliente) REFERENCES cliente(id_cliente),
     CONSTRAINT fk_funcionario_pedido FOREIGN KEY (id_funcionario) REFERENCES funcionario(id_funcionario)
+) ENGINE=InnoDB;
+
+-- 5.1 TABELA DE ITENS DO PEDIDO (Novo!)
+CREATE TABLE item_pedido (
+    id_item_pedido INT NOT NULL AUTO_INCREMENT,
+    id_pedido INT NOT NULL,
+    id_cardapio INT NOT NULL,
+    quantidade INT NOT NULL DEFAULT 1,
+    PRIMARY KEY (id_item_pedido),
+    CONSTRAINT fk_pedido_item FOREIGN KEY (id_pedido) REFERENCES pedido(id_pedido) ON DELETE CASCADE,
+    CONSTRAINT fk_cardapio_item FOREIGN KEY (id_cardapio) REFERENCES cardapio(id_cardapio)
 ) ENGINE=InnoDB;
 
 -- 6. POPULAR O CARDÁPIO
@@ -61,13 +72,17 @@ INSERT INTO cliente (cpf, nome) VALUES
 
 -- 8. POPULAR FUNCIONÁRIOS
 INSERT INTO funcionario (nome, cargo, salario, status) VALUES
-('Claudia', 'garçom', 1800.00, 'empregado'),
-('Pedro', 'cozinheiro', 2500.00, 'empregado'),
-('Marcelo', 'gerente', 5000.00, 'empregado');
+('Claudia', 'Garçom', 1800.00, 'Ativo'),
+('Pedro', 'Cozinheiro', 2500.00, 'Ativo'),
+('Marcelo', 'Gerente', 5000.00, 'Ativo');
 
--- 9. POPULAR PEDIDOS (Inseri um pedido para você testar se o erro 500 sumiu)
+-- 9. POPULAR PEDIDOS E ITENS
 INSERT INTO pedido (id_cliente, id_funcionario, status_pedido) VALUES
 (1, 1, 'Em preparo');
+
+INSERT INTO item_pedido (id_pedido, id_cardapio, quantidade) VALUES
+(1, 3, 1), -- 1 Cozido de Pikachu
+(1, 8, 2); -- 2 Tempurás de Tentacool
 
 -- 10. VERIFICAÇÃO FINAL
 SELECT * FROM cardapio;

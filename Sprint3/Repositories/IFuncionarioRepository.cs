@@ -5,6 +5,9 @@ namespace Sprint3.Repositories
     public interface IFuncionarioRepository
     {
         Task<IEnumerable<Funcionario>> ListarTodos();
-        Task Adicionar(Funcionario funcionario);
+        Task<Funcionario?> BuscarPorId(int id);
+        Task Criar(Funcionario funcionario);
+        Task Atualizar(Funcionario funcionario);
+        Task<bool> Deletar(int id);
     }
 }

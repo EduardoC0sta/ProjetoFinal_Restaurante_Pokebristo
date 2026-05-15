@@ -17,10 +17,25 @@ namespace Sprint3.Repositories
                 .ToListAsync();
         }
 
+        public async Task<Pedido?> BuscarPorId(int id)
+        {
+            return await _context.Pedidos.FindAsync(id);
+        }
+
         public async Task CriarPedido(Pedido pedido)
         {
             _context.Pedidos.Add(pedido);
+            await _context.SaveChangesAsync(); // Salvar no MySQL
+        }
+
+        public async Task<bool> DeletarPedido(int id)
+        {
+            var pedido = await BuscarPorId(id);
+            if (pedido == null) return false;
+
+            _context.Pedidos.Remove(pedido);
             await _context.SaveChangesAsync();
+            return true;
         }
     }
 }

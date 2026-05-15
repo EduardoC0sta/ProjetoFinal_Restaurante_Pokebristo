@@ -85,6 +85,7 @@
                 <a class="navbar-brand fw-bold" href="#"><i class="bi bi-poda-ball me-2"></i>Admin</a>
                 <div class="navbar-nav me-auto">
                     <a class="nav-link active" onclick="switchTab('cardapio', event)">Cardápio</a>
+                    <a class="nav-link" onclick="switchTab('funcionarios', event)">Funcionários</a>
                     <a class="nav-link" onclick="switchTab('pedidos', event)">Pedidos</a>
                 </div>
                 <button class="btn btn-outline-light btn-sm fw-bold" onclick="logout()">Sair <i class="bi bi-box-arrow-right ms-1"></i></button>
@@ -92,6 +93,7 @@
         </nav>
 
         <div class="container">
+
             <!-- ABA CARDÁPIO -->
             <div id="tab-cardapio">
                 <div class="card shadow-sm" id="cardForm">
@@ -125,6 +127,56 @@
                                 <tr><th class="ps-4">ID</th><th>Nome</th><th>Descrição</th><th>Preço</th><th class="text-center">Ações</th></tr>
                             </thead>
                             <tbody id="tabelaCardapio"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ABA FUNCIONÁRIOS (NOVA) -->
+            <div id="tab-funcionarios" class="hidden">
+                <div class="card shadow-sm" id="funcForm">
+                    <div class="card-body p-4">
+                        <h5 class="card-title mb-4" id="funcTitle"><i class="bi bi-person-plus me-2"></i>Novo Funcionário</h5>
+                        <form id="formFuncionario" class="row g-3">
+                            <input type="hidden" id="idFunc">
+                            <div class="col-12 col-md-4">
+                                <label class="form-label fw-bold small text-uppercase">Nome Completo</label>
+                                <input type="text" id="funcNome" class="form-control" required>
+                            </div>
+                            <div class="col-12 col-md-3">
+                                <label class="form-label fw-bold small text-uppercase">Cargo</label>
+                                <select id="funcCargo" class="form-select" required>
+                                    <option value="Garçom">Garçom</option>
+                                    <option value="Cozinheiro">Cozinheiro</option>
+                                    <option value="Gerente">Gerente</option>
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-2">
+                                <label class="form-label fw-bold small text-uppercase">Salário (R$)</label>
+                                <input type="number" id="funcSalario" class="form-control" step="0.01" required>
+                            </div>
+                            <div class="col-12 col-md-2">
+                                <label class="form-label fw-bold small text-uppercase">Status</label>
+                                <select id="funcStatus" class="form-select" required>
+                                    <option value="Ativo">Ativo</option>
+                                    <option value="Férias">Férias</option>
+                                    <option value="Demitido">Demitido</option>
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-1 d-flex align-items-end">
+                                <button type="submit" class="btn btn-success w-100 py-2 shadow-sm"><i class="bi bi-check-lg"></i></button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-dark">
+                                <tr><th class="ps-4">ID</th><th>Nome</th><th>Cargo</th><th>Salário</th><th>Status</th><th class="text-center">Ações</th></tr>
+                            </thead>
+                            <tbody id="tabelaFuncionarios"></tbody>
                         </table>
                     </div>
                 </div>
@@ -174,6 +226,7 @@
             document.getElementById('loginSection').classList.add('hidden');
             document.getElementById('adminPanel').classList.remove('hidden');
             carregarCardapio();
+            carregarFuncionarios();
             carregarPedidos();
         }
 
@@ -182,24 +235,25 @@
             location.reload();
         }
 
+        // Troca de Abas
         function switchTab(tab, event) {
             document.getElementById('tab-cardapio').classList.toggle('hidden', tab !== 'cardapio');
+            document.getElementById('tab-funcionarios').classList.toggle('hidden', tab !== 'funcionarios');
             document.getElementById('tab-pedidos').classList.toggle('hidden', tab !== 'pedidos');
             document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
             if (event) event.target.classList.add('active');
         }
 
-        // Carregar Itens do Cardápio
+        // ==========================
+        // LÓGICA DE CARDÁPIO
+        // ==========================
         async function carregarCardapio() {
             const tbody = document.getElementById('tabelaCardapio');
             if (!tbody) return;
-
-            tbody.innerHTML = ""; // Limpa a tabela antes de preencher
+            tbody.innerHTML = "";
 
             try {
-                const res = await fetch(`${BASE_URL}/Cardapio`, {
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('pokeToken')}` }
-                });
+                const res = await fetch(`${BASE_URL}/Cardapio`, { headers: { 'Authorization': `Bearer ${localStorage.getItem('pokeToken')}` } });
                 if (res.status === 401) logout();
                 const pratos = await res.json();
 
@@ -214,58 +268,101 @@
                                 <button class="btn btn-sm btn-outline-danger" onclick="excluirPrato(${p.idCardapio})"><i class="bi bi-trash"></i></button>
                             </td>
                         </tr>`).join('');
-            } catch (err) { console.error("Erro ao carregar cardápio:", err); }
+            } catch (err) { console.error(err); }
         }
 
-        // Salvar/Editar Prato
         document.getElementById('formCardapio').addEventListener('submit', async (e) => {
             e.preventDefault();
             const id = document.getElementById('idPrato').value;
-            const payload = {
-                nome: document.getElementById('nome').value,
-                descricao: document.getElementById('descricao').value,
-                preco: parseFloat(document.getElementById('preco').value)
-            };
+            const payload = { nome: document.getElementById('nome').value, descricao: document.getElementById('descricao').value, preco: parseFloat(document.getElementById('preco').value) };
             const method = id ? 'PUT' : 'POST';
             const url = id ? `${BASE_URL}/Cardapio/${id}` : `${BASE_URL}/Cardapio`;
             if (id) payload.idCardapio = parseInt(id);
 
             try {
-                await fetch(url, {
-                    method: method,
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('pokeToken')}`
-                    },
-                    body: JSON.stringify(payload)
-                });
+                await fetch(url, { method: method, headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('pokeToken')}` }, body: JSON.stringify(payload) });
                 cancelarEdicao();
                 carregarCardapio();
-            } catch (err) { alert("Erro ao salvar prato."); }
+            } catch (err) { alert("Erro ao salvar."); }
         });
 
         async function excluirPrato(id) {
-            if (!confirm("Deseja realmente excluir este prato?")) return;
-            try {
-                await fetch(`${BASE_URL}/Cardapio/${id}`, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('pokeToken')}` }
-                });
-                carregarCardapio();
-            } catch (err) { alert("Erro ao excluir."); }
+            if (!confirm("Excluir prato?")) return;
+            await fetch(`${BASE_URL}/Cardapio/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('pokeToken')}` } });
+            carregarCardapio();
         }
 
-        // Carregar Pedidos
+        function prepararEdicao(id, nome, desc, preco) {
+            document.getElementById('idPrato').value = id; document.getElementById('nome').value = nome; document.getElementById('descricao').value = desc; document.getElementById('preco').value = preco;
+            document.getElementById('cardForm').classList.add('edit-mode'); document.getElementById('formTitle').innerText = "Editando Prato";
+        }
+
+        function cancelarEdicao() {
+            document.getElementById('formCardapio').reset(); document.getElementById('idPrato').value = "";
+            document.getElementById('cardForm').classList.remove('edit-mode'); document.getElementById('formTitle').innerText = "Novo Prato";
+        }
+
+        // ==========================
+        // LÓGICA DE FUNCIONÁRIOS
+        // ==========================
+        async function carregarFuncionarios() {
+            const tbody = document.getElementById('tabelaFuncionarios');
+            if (!tbody) return;
+            tbody.innerHTML = "";
+
+            try {
+                const res = await fetch(`${BASE_URL}/Funcionario`, { headers: { 'Authorization': `Bearer ${localStorage.getItem('pokeToken')}` } });
+                const funcs = await res.json();
+                tbody.innerHTML = funcs.map(f => `
+                        <tr>
+                            <td class="ps-4">#${f.idFuncionario || f.id}</td>
+                            <td class="fw-bold">${f.nome}</td>
+                            <td>${f.cargo}</td>
+                            <td class="text-success fw-bold">R$ ${f.salario.toFixed(2)}</td>
+                            <td><span class="badge ${f.status === 'Ativo' ? 'bg-success' : 'bg-secondary'}">${f.status}</span></td>
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-outline-danger" onclick="excluirFuncionario(${f.idFuncionario || f.id})"><i class="bi bi-trash"></i></button>
+                            </td>
+                        </tr>`).join('');
+            } catch (err) { console.error(err); }
+        }
+
+        document.getElementById('formFuncionario').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const payload = {
+                nome: document.getElementById('funcNome').value,
+                cargo: document.getElementById('funcCargo').value,
+                salario: parseFloat(document.getElementById('funcSalario').value),
+                status: document.getElementById('funcStatus').value
+            };
+
+            try {
+                await fetch(`${BASE_URL}/Funcionario`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('pokeToken')}` },
+                    body: JSON.stringify(payload)
+                });
+                document.getElementById('formFuncionario').reset();
+                carregarFuncionarios();
+            } catch (err) { alert("Erro ao salvar funcionário."); }
+        });
+
+        async function excluirFuncionario(id) {
+            if (!confirm("Demitir funcionário?")) return;
+            await fetch(`${BASE_URL}/Funcionario/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('pokeToken')}` } });
+            carregarFuncionarios();
+        }
+
+        // ==========================
+        // LÓGICA DE PEDIDOS
+        // ==========================
         async function carregarPedidos() {
             const tbody = document.getElementById('tabelaPedidos');
             if (!tbody) return;
-
-            tbody.innerHTML = ""; // Limpa a tabela antes de preencher
+            tbody.innerHTML = "";
 
             try {
-                const res = await fetch(`${BASE_URL}/Pedido`, {
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('pokeToken')}` }
-                });
+                const res = await fetch(`${BASE_URL}/Pedido`, { headers: { 'Authorization': `Bearer ${localStorage.getItem('pokeToken')}` } });
                 const pedidos = await res.json();
                 tbody.innerHTML = pedidos.map(p => `
                         <tr>
@@ -274,23 +371,7 @@
                             <td>${new Date(p.dataPedido).toLocaleDateString()}</td>
                             <td><span class="badge bg-info">${p.statusPedido || 'Pendente'}</span></td>
                         </tr>`).join('');
-            } catch (e) { console.error("Erro ao carregar pedidos:", e); }
-        }
-
-        function prepararEdicao(id, nome, desc, preco) {
-            document.getElementById('idPrato').value = id;
-            document.getElementById('nome').value = nome;
-            document.getElementById('descricao').value = desc;
-            document.getElementById('preco').value = preco;
-            document.getElementById('cardForm').classList.add('edit-mode');
-            document.getElementById('formTitle').innerText = "Editando Prato";
-        }
-
-        function cancelarEdicao() {
-            document.getElementById('formCardapio').reset();
-            document.getElementById('idPrato').value = "";
-            document.getElementById('cardForm').classList.remove('edit-mode');
-            document.getElementById('formTitle').innerText = "Novo Prato";
+            } catch (e) { console.error("Erro ao carregar pedidos"); }
         }
 
         // Verifica login ao carregar
