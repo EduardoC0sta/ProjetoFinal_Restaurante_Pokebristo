@@ -36,7 +36,7 @@ builder.Services.AddSwaggerGen(c => {
 });
 
 // 3. AUTENTICAÇÃO JWT
-var key = Encoding.ASCII.GetBytes(builder.Configuration["Jwt:Key"]);
+var key = Encoding.ASCII.GetBytes(builder.Configuration["Jwt:Key"] ?? "ChaveSecretaSuperSeguraDoPokeBistro2026");
 builder.Services.AddAuthentication(x => {
     x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;

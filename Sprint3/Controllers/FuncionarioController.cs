@@ -35,6 +35,20 @@ namespace Sprint3.Controllers
             }
         }
 
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Put(int id, [FromBody] FuncionarioDTO dto)
+        {
+            try
+            {
+                await _service.AtualizarFuncionario(id, dto);
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {

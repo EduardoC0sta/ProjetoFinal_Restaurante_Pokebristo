@@ -5,6 +5,6 @@
         public string Nome { get; set; } = string.Empty;
         public string? Cargo { get; set; }
         public decimal Salario { get; set; }
-        public string Status { get; set; } = "Ativo";
+        public string Status { get; set; } = "Empregado";
     }
 }

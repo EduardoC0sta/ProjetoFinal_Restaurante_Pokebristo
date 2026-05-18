@@ -57,7 +57,6 @@
 </head>
 <body>
 
-    <!-- SEÇÃO DE LOGIN -->
     <div id="loginSection" class="container">
         <div class="card shadow-lg p-4" style="max-width: 400px; width: 100%;">
             <div class="text-center mb-4">
@@ -78,7 +77,6 @@
         </div>
     </div>
 
-    <!-- PAINEL ADMINISTRATIVO -->
     <div id="adminPanel" class="hidden">
         <nav class="navbar navbar-dark navbar-expand-lg shadow mb-4">
             <div class="container">
@@ -94,7 +92,6 @@
 
         <div class="container">
 
-            <!-- ABA CARDÁPIO -->
             <div id="tab-cardapio">
                 <div class="card shadow-sm" id="cardForm">
                     <div class="card-body p-4">
@@ -132,7 +129,6 @@
                 </div>
             </div>
 
-            <!-- ABA FUNCIONÁRIOS (NOVA) -->
             <div id="tab-funcionarios" class="hidden">
                 <div class="card shadow-sm" id="funcForm">
                     <div class="card-body p-4">
@@ -158,7 +154,7 @@
                             <div class="col-12 col-md-2">
                                 <label class="form-label fw-bold small text-uppercase">Status</label>
                                 <select id="funcStatus" class="form-select" required>
-                                    <option value="Ativo">Ativo</option>
+                                    <option value="Empregado">Empregado</option>
                                     <option value="Férias">Férias</option>
                                     <option value="Demitido">Demitido</option>
                                 </select>
@@ -182,14 +178,41 @@
                 </div>
             </div>
 
-            <!-- ABA PEDIDOS -->
             <div id="tab-pedidos" class="hidden">
-                <div class="card shadow-sm p-4">
-                    <h5 class="mb-4"><i class="bi bi-cart-check me-2"></i>Pedidos Realizados</h5>
+                <div class="card shadow-sm" id="pedidoFormCard">
+                    <div class="card-body p-4">
+                        <h5 class="card-title mb-4" id="pedidoFormTitle"><i class="bi bi-pencil-square me-2"></i>Gerenciar Pedido</h5>
+                        <form id="formPedido" class="row g-3">
+                            <input type="hidden" id="idPedido">
+                            <div class="col-12 col-md-3">
+                                <label class="form-label fw-bold small text-uppercase">ID do Cliente</label>
+                                <input type="number" id="pedidoIdCliente" class="form-control" required>
+                            </div>
+                            <div class="col-12 col-md-3">
+                                <label class="form-label fw-bold small text-uppercase">ID do Funcionário</label>
+                                <input type="number" id="pedidoIdFuncionario" class="form-control" required>
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <label class="form-label fw-bold small text-uppercase">Status do Pedido</label>
+                                <select id="pedidoStatus" class="form-select" required>
+                                    <option value="Pendente">Pendente</option>
+                                    <option value="Em preparo">Em preparo</option>
+                                    <option value="Entregue">Entregue</option>
+                                    <option value="Cancelado">Cancelado</option>
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-2 d-flex align-items-end">
+                                <button type="submit" class="btn btn-warning text-dark w-100 py-2 fw-bold shadow-sm"><i class="bi bi-save me-1"></i>Salvar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm">
                     <div class="table-responsive">
-                        <table class="table table-striped">
+                        <table class="table table-striped align-middle mb-0">
                             <thead class="table-dark">
-                                <tr><th>#</th><th>Cliente</th><th>Data</th><th>Status</th></tr>
+                                <tr><th>#</th><th>Cliente</th><th>Data</th><th>Status</th><th class="text-center">Ações</th></tr>
                             </thead>
                             <tbody id="tabelaPedidos"></tbody>
                         </table>
@@ -251,23 +274,21 @@
             const tbody = document.getElementById('tabelaCardapio');
             if (!tbody) return;
             tbody.innerHTML = "";
-
             try {
                 const res = await fetch(`${BASE_URL}/Cardapio`, { headers: { 'Authorization': `Bearer ${localStorage.getItem('pokeToken')}` } });
                 if (res.status === 401) logout();
                 const pratos = await res.json();
-
                 tbody.innerHTML = pratos.map(p => `
-                        <tr>
-                            <td class="ps-4">#${p.idCardapio}</td>
-                            <td class="fw-bold">${p.nome}</td>
-                            <td>${p.descricao}</td>
-                            <td class="text-primary fw-bold">R$ ${p.preco.toFixed(2)}</td>
-                            <td class="text-center">
-                                <button class="btn btn-sm btn-outline-warning" onclick="prepararEdicao(${p.idCardapio}, '${p.nome}', '${p.descricao}', ${p.preco})"><i class="bi bi-pencil"></i></button>
-                                <button class="btn btn-sm btn-outline-danger" onclick="excluirPrato(${p.idCardapio})"><i class="bi bi-trash"></i></button>
-                            </td>
-                        </tr>`).join('');
+                            <tr>
+                                <td class="ps-4">#${p.idCardapio}</td>
+                                <td class="fw-bold">${p.nome}</td>
+                                <td>${p.descricao}</td>
+                                <td class="text-primary fw-bold">R$ ${p.preco.toFixed(2)}</td>
+                                <td class="text-center">
+                                    <button class="btn btn-sm btn-outline-warning" onclick="prepararEdicao(${p.idCardapio}, '${p.nome}', '${p.descricao}', ${p.preco})"><i class="bi bi-pencil"></i></button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="excluirPrato(${p.idCardapio})"><i class="bi bi-trash"></i></button>
+                                </td>
+                            </tr>`).join('');
             } catch (err) { console.error(err); }
         }
 
@@ -278,16 +299,14 @@
             const method = id ? 'PUT' : 'POST';
             const url = id ? `${BASE_URL}/Cardapio/${id}` : `${BASE_URL}/Cardapio`;
             if (id) payload.idCardapio = parseInt(id);
-
             try {
                 await fetch(url, { method: method, headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('pokeToken')}` }, body: JSON.stringify(payload) });
-                cancelarEdicao();
-                carregarCardapio();
+                cancelarEdicao(); carregarCardapio();
             } catch (err) { alert("Erro ao salvar."); }
         });
 
         async function excluirPrato(id) {
-            if (!confirm("Excluir prato?")) return;
+            if (!confirm("Deseja realmente excluir este prato?")) return;
             await fetch(`${BASE_URL}/Cardapio/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('pokeToken')}` } });
             carregarCardapio();
         }
@@ -303,32 +322,39 @@
         }
 
         // ==========================
-        // LÓGICA DE FUNCIONÁRIOS
+        // LÓGICA DE FUNCIONÁRIOS (EDITÁVEL!)
         // ==========================
         async function carregarFuncionarios() {
             const tbody = document.getElementById('tabelaFuncionarios');
             if (!tbody) return;
             tbody.innerHTML = "";
-
             try {
                 const res = await fetch(`${BASE_URL}/Funcionario`, { headers: { 'Authorization': `Bearer ${localStorage.getItem('pokeToken')}` } });
                 const funcs = await res.json();
-                tbody.innerHTML = funcs.map(f => `
-                        <tr>
-                            <td class="ps-4">#${f.idFuncionario || f.id}</td>
-                            <td class="fw-bold">${f.nome}</td>
-                            <td>${f.cargo}</td>
-                            <td class="text-success fw-bold">R$ ${f.salario.toFixed(2)}</td>
-                            <td><span class="badge ${f.status === 'Ativo' ? 'bg-success' : 'bg-secondary'}">${f.status}</span></td>
-                            <td class="text-center">
-                                <button class="btn btn-sm btn-outline-danger" onclick="excluirFuncionario(${f.idFuncionario || f.id})"><i class="bi bi-trash"></i></button>
-                            </td>
-                        </tr>`).join('');
+                tbody.innerHTML = funcs.map(f => {
+                    const idAtual = f.idFuncionario || f.id;
+                    const statusLower = f.status ? f.status.toLowerCase() : '';
+                    const isOk = statusLower === 'empregado' || statusLower === 'ativo';
+                    const badgeClass = isOk ? 'bg-success' : 'bg-secondary';
+                    return `
+                                <tr>
+                                    <td class="ps-4">#${idAtual}</td>
+                                    <td class="fw-bold">${f.nome}</td>
+                                    <td>${f.cargo}</td>
+                                    <td class="text-success fw-bold">R$ ${f.salario.toFixed(2)}</td>
+                                    <td><span class="badge ${badgeClass}">${f.status}</span></td>
+                                    <td class="text-center">
+                                        <button class="btn btn-sm btn-outline-warning me-1" onclick="prepararEdicaoFuncionario(${idAtual}, '${f.nome}', '${f.cargo}', ${f.salario}, '${f.status}')"><i class="bi bi-pencil"></i></button>
+                                        <button class="btn btn-sm btn-outline-danger" onclick="excluirFuncionario(${idAtual})"><i class="bi bi-trash"></i></button>
+                                    </td>
+                                </tr>`;
+                }).join('');
             } catch (err) { console.error(err); }
         }
 
         document.getElementById('formFuncionario').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const id = document.getElementById('idFunc').value;
             const payload = {
                 nome: document.getElementById('funcNome').value,
                 cargo: document.getElementById('funcCargo').value,
@@ -336,14 +362,21 @@
                 status: document.getElementById('funcStatus').value
             };
 
+            const method = id ? 'PUT' : 'POST';
+            const url = id ? `${BASE_URL}/Funcionario/${id}` : `${BASE_URL}/Funcionario`;
+
             try {
-                await fetch(`${BASE_URL}/Funcionario`, {
-                    method: 'POST',
+                const res = await fetch(url, {
+                    method: method,
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('pokeToken')}` },
                     body: JSON.stringify(payload)
                 });
-                document.getElementById('formFuncionario').reset();
-                carregarFuncionarios();
+                if (res.ok) {
+                    cancelarEdicaoFuncionario();
+                    carregarFuncionarios();
+                } else {
+                    alert("Erro ao salvar dados do funcionário.");
+                }
             } catch (err) { alert("Erro ao salvar funcionário."); }
         });
 
@@ -353,28 +386,101 @@
             carregarFuncionarios();
         }
 
+        function prepararEdicaoFuncionario(id, nome, cargo, salario, status) {
+            document.getElementById('idFunc').value = id;
+            document.getElementById('funcNome').value = nome;
+            document.getElementById('funcCargo').value = cargo;
+            document.getElementById('funcSalario').value = salario;
+            document.getElementById('funcStatus').value = status || "Empregado";
+            document.getElementById('funcForm').classList.add('edit-mode');
+            document.getElementById('funcTitle').innerHTML = `<i class="bi bi-pencil-square me-2"></i>Editando Funcionário #${id}`;
+        }
+
+        function cancelarEdicaoFuncionario() {
+            document.getElementById('formFuncionario').reset();
+            document.getElementById('idFunc').value = "";
+            document.getElementById('funcForm').classList.remove('edit-mode');
+            document.getElementById('funcTitle').innerHTML = `<i class="bi bi-person-plus me-2"></i>Novo Funcionário`;
+        }
+
         // ==========================
-        // LÓGICA DE PEDIDOS
+        // LÓGICA DE PEDIDOS (EDITÁVEL!)
         // ==========================
         async function carregarPedidos() {
             const tbody = document.getElementById('tabelaPedidos');
             if (!tbody) return;
             tbody.innerHTML = "";
-
             try {
                 const res = await fetch(`${BASE_URL}/Pedido`, { headers: { 'Authorization': `Bearer ${localStorage.getItem('pokeToken')}` } });
                 const pedidos = await res.json();
-                tbody.innerHTML = pedidos.map(p => `
-                        <tr>
-                            <td>#${p.idPedido}</td>
-                            <td>${p.cliente ? p.cliente.nome : 'Anônimo'}</td>
-                            <td>${new Date(p.dataPedido).toLocaleDateString()}</td>
-                            <td><span class="badge bg-info">${p.statusPedido || 'Pendente'}</span></td>
-                        </tr>`).join('');
+                tbody.innerHTML = pedidos.map(p => {
+                    let badgeColor = "bg-info";
+                    if (p.statusPedido === "Em preparo") badgeColor = "bg-warning text-dark";
+                    if (p.statusPedido === "Entregue") badgeColor = "bg-success";
+                    if (p.statusPedido === "Cancelado") badgeColor = "bg-danger";
+
+                    return `
+                            <tr>
+                                <td><strong>#${p.idPedido}</strong></td>
+                                <td>${p.cliente ? p.cliente.nome : 'Anônimo'} (ID: ${p.idCliente})</td>
+                                <td>${new Date(p.dataPedido).toLocaleDateString()}</td>
+                                <td><span class="badge ${badgeColor}">${p.statusPedido || 'Pendente'}</span></td>
+                                <td class="text-center">
+                                    <button class="btn btn-sm btn-outline-warning me-1" onclick="prepararEdicaoPedido(${p.idPedido}, ${p.idCliente}, ${p.idFuncionario}, '${p.statusPedido}')"><i class="bi bi-pencil"></i></button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="excluirPedido(${p.idPedido})"><i class="bi bi-trash"></i></button>
+                                </td>
+                            </tr>`;
+                }).join('');
             } catch (e) { console.error("Erro ao carregar pedidos"); }
         }
 
-        // Verifica login ao carregar
+        function prepararEdicaoPedido(id, idCliente, idFuncionario, status) {
+            document.getElementById('idPedido').value = id;
+            document.getElementById('pedidoIdCliente').value = idCliente;
+            document.getElementById('pedidoIdFuncionario').value = idFuncionario;
+            document.getElementById('pedidoStatus').value = status || "Pendente";
+            document.getElementById('pedidoFormCard').classList.add('edit-mode');
+            document.getElementById('pedidoFormTitle').innerHTML = `<i class="bi bi-pencil-square me-2"></i>Editando Pedido #${id}`;
+        }
+
+        document.getElementById('formPedido').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('idPedido').value;
+
+            if (!id) { alert("Selecione um pedido na tabela clicando no ícone do lápis para editar."); return; }
+
+            const payload = {
+                idCliente: parseInt(document.getElementById('pedidoIdCliente').value),
+                idFuncionario: parseInt(document.getElementById('pedidoIdFuncionario').value),
+                statusPedido: document.getElementById('pedidoStatus').value
+            };
+
+            try {
+                const res = await fetch(`${BASE_URL}/Pedido/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('pokeToken')}` },
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) {
+                    limparFormPedido();
+                    carregarPedidos();
+                } else { alert("Erro ao salvar alterações do pedido."); }
+            } catch (err) { alert("Erro de conexão."); }
+        });
+
+        async function excluirPedido(id) {
+            if (!confirm("Deseja cancelar/excluir este pedido permanentemente?")) return;
+            await fetch(`${BASE_URL}/Pedido/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('pokeToken')}` } });
+            carregarPedidos();
+        }
+
+        function limparFormPedido() {
+            document.getElementById('formPedido').reset();
+            document.getElementById('idPedido').value = "";
+            document.getElementById('pedidoFormCard').classList.remove('edit-mode');
+            document.getElementById('pedidoFormTitle').innerHTML = `<i class="bi bi-cart-check me-2"></i>Gerenciar Pedido`;
+        }
+
         if (localStorage.getItem('pokeToken')) initAdmin();
     </script>
 </body>

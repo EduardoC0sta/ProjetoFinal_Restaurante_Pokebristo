@@ -42,7 +42,7 @@ CREATE TABLE pedido (
     CONSTRAINT fk_funcionario_pedido FOREIGN KEY (id_funcionario) REFERENCES funcionario(id_funcionario)
 ) ENGINE=InnoDB;
 
--- 5.1 TABELA DE ITENS DO PEDIDO (Novo!)
+-- 5.1 TABELA DE ITENS DO PEDIDO
 CREATE TABLE item_pedido (
     id_item_pedido INT NOT NULL AUTO_INCREMENT,
     id_pedido INT NOT NULL,
@@ -72,17 +72,17 @@ INSERT INTO cliente (cpf, nome) VALUES
 
 -- 8. POPULAR FUNCIONÁRIOS
 INSERT INTO funcionario (nome, cargo, salario, status) VALUES
-('Claudia', 'Garçom', 1800.00, 'Ativo'),
-('Pedro', 'Cozinheiro', 2500.00, 'Ativo'),
-('Marcelo', 'Gerente', 5000.00, 'Ativo');
+('Claudia', 'Garçom', 1800.00, 'Empregado'),
+('Pedro', 'Cozinheiro', 2500.00, 'Empregado'),
+('Marcelo', 'Gerente', 5000.00, 'Empregado');
 
 -- 9. POPULAR PEDIDOS E ITENS
 INSERT INTO pedido (id_cliente, id_funcionario, status_pedido) VALUES
 (1, 1, 'Em preparo');
 
-INSERT INTO item_pedido (id_pedido, id_cardapio, quantidade) VALUES
-(1, 3, 1), -- 1 Cozido de Pikachu
-(1, 8, 2); -- 2 Tempurás de Tentacool
+INSERT INTO item_pedido (id_pedido, id_cardapio, grandmother_quantidade) VALUES
+(1, 3, 1), 
+(1, 8, 2); 
 
 -- 10. VERIFICAÇÃO FINAL
 SELECT * FROM cardapio;

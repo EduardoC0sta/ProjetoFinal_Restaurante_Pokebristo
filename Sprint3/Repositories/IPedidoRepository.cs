@@ -7,6 +7,7 @@ namespace Sprint3.Repositories
         Task<IEnumerable<Pedido>> ListarTodos();
         Task<Pedido?> BuscarPorId(int id);
         Task CriarPedido(Pedido pedido);
+        Task AtualizarPedido(Pedido pedido);
         Task<bool> DeletarPedido(int id);
     }
 }
