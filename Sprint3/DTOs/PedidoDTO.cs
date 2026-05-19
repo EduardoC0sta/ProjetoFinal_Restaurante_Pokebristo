@@ -5,7 +5,8 @@
         public int IdCliente { get; set; }
         public int IdFuncionario { get; set; }
         public string? StatusPedido { get; set; }
-        // Lista de itens que o cliente quer comprar
-        public List<ItemPedidoDTO> Itens { get; set; } = new List<ItemPedidoDTO>();
+
+        // Ele vai usar a classe que já está definida no outro arquivo sem dar erro
+        public List<ItemCarrinhoDTO> Itens { get; set; } = new List<ItemCarrinhoDTO>();
     }
 }

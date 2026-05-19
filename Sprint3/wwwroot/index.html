@@ -420,16 +420,16 @@
                     if (p.statusPedido === "Cancelado") badgeColor = "bg-danger";
 
                     return `
-                            <tr>
-                                <td><strong>#${p.idPedido}</strong></td>
-                                <td>${p.cliente ? p.cliente.nome : 'Anônimo'} (ID: ${p.idCliente})</td>
-                                <td>${new Date(p.dataPedido).toLocaleDateString()}</td>
-                                <td><span class="badge ${badgeColor}">${p.statusPedido || 'Pendente'}</span></td>
-                                <td class="text-center">
-                                    <button class="btn btn-sm btn-outline-warning me-1" onclick="prepararEdicaoPedido(${p.idPedido}, ${p.idCliente}, ${p.idFuncionario}, '${p.statusPedido}')"><i class="bi bi-pencil"></i></button>
-                                    <button class="btn btn-sm btn-outline-danger" onclick="excluirPedido(${p.idPedido})"><i class="bi bi-trash"></i></button>
-                                </td>
-                            </tr>`;
+                                <tr>
+                                    <td><strong>#${p.idPedido}</strong></td>
+                                    <td>${p.cliente ? p.cliente.nome : 'Anônimo'} (ID: ${p.idCliente})</td>
+                                    <td>${new Date(p.dataPedido).toLocaleDateString()}</td>
+                                    <td><span class="badge ${badgeColor}">${p.statusPedido || 'Pendente'}</span></td>
+                                    <td class="text-center">
+                                        <button class="btn btn-sm btn-outline-warning me-1" onclick="prepararEdicaoPedido(${p.idPedido}, ${p.idCliente}, ${p.idFuncionario}, '${p.statusPedido}')"><i class="bi bi-pencil"></i></button>
+                                        <button class="btn btn-sm btn-outline-danger" onclick="excluirPedido(${p.idPedido})"><i class="bi bi-trash"></i></button>
+                                    </td>
+                                </tr>`;
                 }).join('');
             } catch (e) { console.error("Erro ao carregar pedidos"); }
         }

@@ -5,7 +5,7 @@ using Sprint3.Services;
 
 namespace Sprint3.Controllers
 {
-    [Authorize(Roles = "Gerente")] // Segurança JWT
+    [Authorize(Roles = "Gerente")] // Mantém a segurança padrão para os outros métodos
     [Route("api/[controller]")]
     [ApiController]
     public class CardapioController : ControllerBase
@@ -13,7 +13,9 @@ namespace Sprint3.Controllers
         private readonly CardapioService _service;
         public CardapioController(CardapioService service) => _service = service;
 
+        // LIBERADO: Clientes finais podem listar os pratos sem precisar de token de gerente
         [HttpGet]
+        [AllowAnonymous]
         public async Task<IActionResult> Get() => Ok(await _service.Listar());
 
         [HttpGet("{id}")]

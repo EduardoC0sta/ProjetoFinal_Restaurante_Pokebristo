@@ -1,0 +1,248 @@
+﻿<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PokeBistro - Faça seu Pedido</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --poke-red: #ef5350;
+        }
+
+        body {
+            background-color: #f4f7f6;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .navbar {
+            background-color: var(--poke-red) !important;
+            border-bottom: 4px solid #b71c1c;
+        }
+
+        .card-prato {
+            border: none;
+            border-radius: 12px;
+            transition: transform 0.2s;
+        }
+
+            .card-prato:hover {
+                transform: translateY(-5px);
+            }
+
+        .badge-cart {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+        }
+
+        /* Classe utilitária necessária para ocultar elementos */
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-dark navbar-expand shadow mb-4 sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="#"><i class="bi bi-egg-fried me-2"></i>PokéBistro Menu</a>
+            <div class="navbar-nav ms-auto align-items-center">
+                <button class="btn btn-outline-light position-relative me-3" data-bs-toggle="modal" data-bs-target="#modalCarrinho" onclick="atualizarModalCarrinho()">
+                    <i class="bi bi-cart3"></i> Carrinho
+                    <span id="contadorCarrinho" class="badge rounded-pill bg-dark badge-cart">0</span>
+                </button>
+                <span id="nomeClienteLogado" class="navbar-text text-white small fw-bold me-2"></span>
+                <button id="btnSairCliente" class="btn btn-outline-light btn-sm fw-bold hidden" onclick="logoutCliente()">
+                    <i class="bi bi-box-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mb-5">
+        <div class="row g-4" id="containerCardapio">
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalCarrinho" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-bag-check me-2"></i>Seu Carrinho</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-shadow="none" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="listaItensCarrinho" class="list-group mb-3"></div>
+                    <div class="d-flex justify-content-between fw-bold fs-5 p-2 bg-light border rounded">
+                        <span>Total:</span><span id="precoTotalCarrinho">R$ 0.00</span>
+                    </div>
+
+                    <div id="secaoIdentificacao" class="mt-4 border-top pt-3">
+                        <h6 class="fw-bold mb-3"><i class="bi bi-person-vcard me-2"></i>Identifique-se para finalizar</h6>
+                        <div class="mb-2">
+                            <label class="form-label small">Seu CPF</label>
+                            <input type="text" id="cliCpf" class="form-control form-control-sm" placeholder="123.456.789-00" required>
+                        </div>
+                        <div id="campoNomeOpcional" class="mb-2">
+                            <label class="form-label small">Seu Nome Completo (Se for novo por aqui)</label>
+                            <input type="text" id="cliNome" class="form-control form-control-sm" placeholder="Treinador Pokémon">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Continuar Comprando</button>
+                    <button type="button" class="btn btn-danger btn-sm fw-bold" onclick="finalizarPedidoDoCarrinho()">FECHAR PEDIDO</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const BASE_URL = "https://localhost:7151/api";
+        let carrinho = JSON.parse(localStorage.getItem('bistroCart')) || [];
+
+        async function carregarCardapioCliente() {
+            try {
+                const res = await fetch(`${BASE_URL}/Cardapio`);
+                const pratos = await res.json();
+                const container = document.getElementById('containerCardapio');
+
+                container.innerHTML = pratos.map(p => `
+                            <div class="col-12 col-sm-6 col-md-4">
+                                <div class="card card-prato shadow-sm h-100 p-3">
+                                    <h5 class="fw-bold text-dark mb-1">${p.nome}</h5>
+                                    <p class="text-secondary small flex-grow-1">${p.descricao}</p>
+                                    <div class="d-flex justify-content-between align-items-center mt-3">
+                                        <span class="text-danger fw-bold fs-5">R$ ${p.preco.toFixed(2)}</span>
+                                        <button class="btn btn-sm btn-dark" onclick="adicionarItem(${p.idCardapio}, '${p.nome}', ${p.preco})"><i class="bi bi-plus-lg me-1"></i>Pedir</button>
+                                    </div>
+                                </div>
+                            </div>`).join('');
+            } catch (e) { console.error("Erro ao renderizar pratos."); }
+            atualizarContadorCart();
+        }
+
+        function adicionarItem(id, nome, preco) {
+            const itemExistente = carrinho.find(i => i.idCardapio === id);
+            if (itemExistente) { itemExistente.quantidade++; }
+            else { carrinho.push({ idCardapio: id, nome: nome, preco: preco, quantidade: 1 }); }
+            salvarCarrinho();
+        }
+
+        function salvarCarrinho() {
+            localStorage.setItem('bistroCart', JSON.stringify(carrinho));
+            atualizarContadorCart();
+        }
+
+        function atualizarContadorCart() {
+            const totalItens = carrinho.reduce((acc, current) => acc + current.quantidade, 0);
+            document.getElementById('contadorCarrinho').innerText = totalItens;
+
+            const clienteLogado = JSON.parse(localStorage.getItem('bistroCliente'));
+            const btnSair = document.getElementById('btnSairCliente');
+            const secaoAuth = document.getElementById('secaoIdentificacao');
+
+            if (clienteLogado) {
+                document.getElementById('nomeClienteLogado').innerText = `Olá, ${clienteLogado.nome}!`;
+                if (secaoAuth) secaoAuth.classList.add('hidden');
+                if (btnSair) btnSair.classList.remove('hidden'); // Mostra o botão de sair
+            } else {
+                document.getElementById('nomeClienteLogado').innerText = '';
+                if (secaoAuth) secaoAuth.classList.remove('hidden');
+                if (btnSair) btnSair.classList.add('hidden'); // Esconde o botão de sair
+            }
+        }
+
+        // NOVO: Função para deslogar o cliente
+        function logoutCliente() {
+            localStorage.removeItem('bistroCliente');
+            location.reload();
+        }
+
+        function atualizarModalCarrinho() {
+            const lista = document.getElementById('listaItensCarrinho');
+            let total = 0;
+
+            if (carrinho.length === 0) {
+                lista.innerHTML = "<p class='text-center text-secondary py-3'>Seu carrinho está limpo.</p>";
+                document.getElementById('precoTotalCarrinho').innerText = "R$ 0.00";
+                return;
+            }
+
+            lista.innerHTML = carrinho.map((i, index) => {
+                total += i.preco * i.quantidade;
+                return `
+                            <div class="list-group-item d-flex justify-content-between align-items-center small">
+                                <div>
+                                    <span class="fw-bold">${i.nome}</span><br>
+                                    <span class="text-secondary">R$ ${i.preco.toFixed(2)} x ${i.quantidade}</span>
+                                </div>
+                                <button class="btn btn-sm text-danger" onclick="removerItemDoCarrinho(${index})"><i class="bi bi-trash"></i></button>
+                            </div>`;
+            }).join('');
+
+            document.getElementById('precoTotalCarrinho').innerText = `R$ ${total.toFixed(2)}`;
+        }
+
+        function removerItemDoCarrinho(index) {
+            carrinho.splice(index, 1);
+            salvarCarrinho();
+            atualizarModalCarrinho();
+        }
+
+        async function finalizarPedidoDoCarrinho() {
+            if (carrinho.length === 0) { alert("Adicione pratos ao carrinho antes de fechar."); return; }
+
+            let clienteLogado = JSON.parse(localStorage.getItem('bistroCliente'));
+
+            if (!clienteLogado) {
+                const cpf = document.getElementById('cliCpf').value;
+                const nome = document.getElementById('cliNome').value;
+
+                if (!cpf) { alert("Por favor, preencha o seu CPF."); return; }
+
+                try {
+                    const authRes = await fetch(`${BASE_URL}/ClienteAuth/identificar`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ nome: nome, cpf: cpf })
+                    });
+
+                    if (authRes.ok) {
+                        clienteLogado = await authRes.json();
+                        localStorage.setItem('bistroCliente', JSON.stringify(clienteLogado));
+                        atualizarContadorCart();
+                    } else { alert("Verifique as informações digitadas."); return; }
+                } catch { alert("Falha na identificação."); return; }
+            }
+
+            const pedidoPayload = {
+                idCliente: clienteLogado.idCliente,
+                idFuncionario: 1,
+                statusPedido: "Pendente",
+                itens: carrinho.map(c => ({ idCardapio: c.idCardapio, quantidade: c.quantidade }))
+            };
+
+            try {
+                const pedidoRes = await fetch(`${BASE_URL}/Pedido`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(pedidoPayload)
+                });
+
+                if (pedidoRes.ok) {
+                    alert("Sucesso! Seu pedido foi enviado para a cozinha do PokéBistro.");
+                    carrinho = [];
+                    salvarCarrinho();
+                    bootstrap.Modal.getInstance(document.getElementById('modalCarrinho')).hide();
+                } else { alert("Erro ao registrar pedido."); }
+            } catch { alert("Erro de conexão."); }
+        }
+
+        carregarCardapioCliente();
+    </script>
+</body>
+</html>

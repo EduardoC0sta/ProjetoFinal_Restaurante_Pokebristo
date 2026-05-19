@@ -14,10 +14,19 @@ namespace Sprint3.Services
             var pedido = new Pedido
             {
                 IdCliente = dto.IdCliente,
-                IdFuncionario = dto.IdFuncionario,
+                // Como o cliente faz o pedido sozinho pelo site, definimos um funcionário padrão (ex: ID 1 - Claudia)
+                IdFuncionario = dto.IdFuncionario == 0 ? 1 : dto.IdFuncionario,
                 StatusPedido = dto.StatusPedido ?? "Pendente",
-                DataPedido = DateTime.Now
+                DataPedido = DateTime.Now,
+
+                // Mapeamento dos itens do carrinho para o modelo do banco de dados
+                Itens = dto.Itens.Select(i => new ItemPedido
+                {
+                    IdCardapio = i.IdCardapio,
+                    Quantidade = i.Quantidade
+                }).ToList()
             };
+
             await _repository.CriarPedido(pedido);
         }
 
