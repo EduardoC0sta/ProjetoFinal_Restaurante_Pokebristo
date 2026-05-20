@@ -37,13 +37,27 @@
             right: -5px;
         }
 
-        /* Classe utilitária necessária para ocultar elementos */
         .hidden {
             display: none !important;
+        }
+
+        .toast-container {
+            z-index: 1200;
         }
     </style>
 </head>
 <body>
+
+    <div class="toast-container position-fixed top-0 end-0 p-3">
+        <div id="liveToastCliente" class="toast align-items-center border-0 text-white shadow-lg" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="6000">
+            <div class="d-flex">
+                <div class="toast-body fw-bold" id="toastMensagemCliente">
+                    Mensagem do Cliente
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
 
     <nav class="navbar navbar-dark navbar-expand shadow mb-4 sticky-top">
         <div class="container">
@@ -104,6 +118,16 @@
         const BASE_URL = "https://localhost:7151/api";
         let carrinho = JSON.parse(localStorage.getItem('bistroCart')) || [];
 
+        // Função Utilitária para Toasts do Cliente
+        function mostrarToastCliente(mensagem, tipo = 'success') {
+            const toastEl = document.getElementById('liveToastCliente');
+            const mensajeEl = document.getElementById('toastMensagemCliente');
+            toastEl.className = `toast align-items-center border-0 text-white shadow-lg bg-${tipo}`;
+            mensajeEl.innerText = mensagem;
+            const toast = new bootstrap.Toast(toastEl);
+            toast.show();
+        }
+
         async function carregarCardapioCliente() {
             try {
                 const res = await fetch(`${BASE_URL}/Cardapio`);
@@ -130,6 +154,7 @@
             if (itemExistente) { itemExistente.quantidade++; }
             else { carrinho.push({ idCardapio: id, nome: nome, preco: preco, quantidade: 1 }); }
             salvarCarrinho();
+            mostrarToastCliente(`Adicionado: ${nome}!`, "success");
         }
 
         function salvarCarrinho() {
@@ -148,15 +173,14 @@
             if (clienteLogado) {
                 document.getElementById('nomeClienteLogado').innerText = `Olá, ${clienteLogado.nome}!`;
                 if (secaoAuth) secaoAuth.classList.add('hidden');
-                if (btnSair) btnSair.classList.remove('hidden'); // Mostra o botão de sair
+                if (btnSair) btnSair.classList.remove('hidden');
             } else {
                 document.getElementById('nomeClienteLogado').innerText = '';
                 if (secaoAuth) secaoAuth.classList.remove('hidden');
-                if (btnSair) btnSair.classList.add('hidden'); // Esconde o botão de sair
+                if (btnSair) btnSair.classList.add('hidden');
             }
         }
 
-        // NOVO: Função para deslogar o cliente
         function logoutCliente() {
             localStorage.removeItem('bistroCliente');
             location.reload();
@@ -188,13 +212,15 @@
         }
 
         function removerItemDoCarrinho(index) {
+            const nomeItem = carrinho[index].nome;
             carrinho.splice(index, 1);
             salvarCarrinho();
             atualizarModalCarrinho();
+            mostrarToastCliente(`Removido: ${nomeItem}`, "warning");
         }
 
         async function finalizarPedidoDoCarrinho() {
-            if (carrinho.length === 0) { alert("Adicione pratos ao carrinho antes de fechar."); return; }
+            if (carrinho.length === 0) { mostrarToastCliente("Seu carrinho está vazio!", "warning"); return; }
 
             let clienteLogado = JSON.parse(localStorage.getItem('bistroCliente'));
 
@@ -202,7 +228,7 @@
                 const cpf = document.getElementById('cliCpf').value;
                 const nome = document.getElementById('cliNome').value;
 
-                if (!cpf) { alert("Por favor, preencha o seu CPF."); return; }
+                if (!cpf) { mostrarToastCliente("Por favor, digite o seu CPF.", "warning"); return; }
 
                 try {
                     const authRes = await fetch(`${BASE_URL}/ClienteAuth/identificar`, {
@@ -214,16 +240,17 @@
                     if (authRes.ok) {
                         clienteLogado = await authRes.json();
                         localStorage.setItem('bistroCliente', JSON.stringify(clienteLogado));
+                        mostrarToastCliente(`Identificado como: ${clienteLogado.nome}`, "success");
                         atualizarContadorCart();
-                    } else { alert("Verifique as informações digitadas."); return; }
-                } catch { alert("Falha na identificação."); return; }
+                    } else { mostrarToastCliente("Verifique as informações digitadas.", "danger"); return; }
+                } catch { mostrarToastCliente("Falha na identificação.", "danger"); return; }
             }
 
             const pedidoPayload = {
                 idCliente: clienteLogado.idCliente,
                 idFuncionario: 1,
                 statusPedido: "Pendente",
-                itens: carrinho.map(c => ({ idCardapio: c.idCardapio, quantidade: c.quantidade }))
+                itens: carrinho.map(c => ({ idCardapio: c.idCardapio, quantity_quantidade: c.quantidade, quantidade: c.quantidade }))
             };
 
             try {
@@ -234,12 +261,12 @@
                 });
 
                 if (pedidoRes.ok) {
-                    alert("Sucesso! Seu pedido foi enviado para a cozinha do PokéBistro.");
+                    mostrarToastCliente("Pedido enviado para a cozinha com sucesso!", "success");
                     carrinho = [];
                     salvarCarrinho();
                     bootstrap.Modal.getInstance(document.getElementById('modalCarrinho')).hide();
-                } else { alert("Erro ao registrar pedido."); }
-            } catch { alert("Erro de conexão."); }
+                } else { mostrarToastCliente("Erro ao registrar seu pedido.", "danger"); }
+            } catch { mostrarToastCliente("Erro de conexão.", "danger"); }
         }
 
         carregarCardapioCliente();

@@ -53,9 +53,24 @@
         .nav-link {
             cursor: pointer;
         }
+
+        .toast-container {
+            z-index: 1100;
+        }
     </style>
 </head>
 <body>
+
+    <div class="toast-container position-fixed top-0 end-0 p-3">
+        <div id="liveToast" class="toast align-items-center border-0 text-white shadow-lg" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="4000">
+            <div class="d-flex">
+                <div class="toast-body fw-bold" id="toastMensagem">
+                    Mensagem aqui
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
 
     <div id="loginSection" class="container">
         <div class="card shadow-lg p-4" style="max-width: 400px; width: 100%;">
@@ -222,8 +237,22 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         const BASE_URL = "https://localhost:7151/api";
+
+        // Função Utilitária para substituir o Alert nativo
+        function mostrarToast(mensagem, tipo = 'success') {
+            const toastEl = document.getElementById('liveToast');
+            const mensagemEl = document.getElementById('toastMensagem');
+
+            // Define a cor de fundo baseado no tipo (success, danger, warning)
+            toastEl.className = `toast align-items-center border-0 text-white shadow-lg bg-${tipo}`;
+            mensagemEl.innerText = mensagem;
+
+            const toast = new bootstrap.Toast(toastEl);
+            toast.show();
+        }
 
         // Login
         document.getElementById('formLogin').addEventListener('submit', async (e) => {
@@ -238,9 +267,10 @@
                 if (res.ok) {
                     const data = await res.json();
                     localStorage.setItem('pokeToken', data.token);
+                    mostrarToast("Login efetuado! Bem-vindo ao painel.", "success");
                     initAdmin();
-                } else { alert("Login Inválido!"); }
-            } catch (err) { alert("Erro de conexão com o servidor."); }
+                } else { mostrarToast("Login ou senha inválidos!", "danger"); }
+            } catch (err) { mostrarToast("Erro de conexão com o servidor.", "danger"); }
         });
 
         function initAdmin() {
@@ -279,16 +309,16 @@
                 if (res.status === 401) logout();
                 const pratos = await res.json();
                 tbody.innerHTML = pratos.map(p => `
-                            <tr>
-                                <td class="ps-4">#${p.idCardapio}</td>
-                                <td class="fw-bold">${p.nome}</td>
-                                <td>${p.descricao}</td>
-                                <td class="text-primary fw-bold">R$ ${p.preco.toFixed(2)}</td>
-                                <td class="text-center">
-                                    <button class="btn btn-sm btn-outline-warning" onclick="prepararEdicao(${p.idCardapio}, '${p.nome}', '${p.descricao}', ${p.preco})"><i class="bi bi-pencil"></i></button>
-                                    <button class="btn btn-sm btn-outline-danger" onclick="excluirPrato(${p.idCardapio})"><i class="bi bi-trash"></i></button>
-                                </td>
-                            </tr>`).join('');
+                                <tr>
+                                    <td class="ps-4">#${p.idCardapio}</td>
+                                    <td class="fw-bold">${p.nome}</td>
+                                    <td>${p.descricao}</td>
+                                    <td class="text-primary fw-bold">R$ ${p.preco.toFixed(2)}</td>
+                                    <td class="text-center">
+                                        <button class="btn btn-sm btn-outline-warning" onclick="prepararEdicao(${p.idCardapio}, '${p.nome}', '${p.descricao}', ${p.preco})"><i class="bi bi-pencil"></i></button>
+                                        <button class="btn btn-sm btn-outline-danger" onclick="excluirPrato(${p.idCardapio})"><i class="bi bi-trash"></i></button>
+                                    </td>
+                                </tr>`).join('');
             } catch (err) { console.error(err); }
         }
 
@@ -300,15 +330,23 @@
             const url = id ? `${BASE_URL}/Cardapio/${id}` : `${BASE_URL}/Cardapio`;
             if (id) payload.idCardapio = parseInt(id);
             try {
-                await fetch(url, { method: method, headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('pokeToken')}` }, body: JSON.stringify(payload) });
-                cancelarEdicao(); carregarCardapio();
-            } catch (err) { alert("Erro ao salvar."); }
+                const res = await fetch(url, { method: method, headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('pokeToken')}` }, body: JSON.stringify(payload) });
+                if (res.ok) {
+                    mostrarToast(id ? "Prato atualizado com sucesso!" : "Prato cadastrado com sucesso!", "success");
+                    cancelarEdicao(); carregarCardapio();
+                } else { mostrarToast("Erro ao processar dados do prato.", "warning"); }
+            } catch (err) { mostrarToast("Erro de conexão.", "danger"); }
         });
 
         async function excluirPrato(id) {
             if (!confirm("Deseja realmente excluir este prato?")) return;
-            await fetch(`${BASE_URL}/Cardapio/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('pokeToken')}` } });
-            carregarCardapio();
+            try {
+                const res = await fetch(`${BASE_URL}/Cardapio/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('pokeToken')}` } });
+                if (res.ok) {
+                    mostrarToast("Prato removido com sucesso!", "success");
+                    carregarCardapio();
+                } else { mostrarToast("Não foi possível excluir o prato.", "warning"); }
+            } catch (e) { mostrarToast("Erro de conexão.", "danger"); }
         }
 
         function prepararEdicao(id, nome, desc, preco) {
@@ -322,7 +360,7 @@
         }
 
         // ==========================
-        // LÓGICA DE FUNCIONÁRIOS (EDITÁVEL!)
+        // LÓGICA DE FUNCIONÁRIOS
         // ==========================
         async function carregarFuncionarios() {
             const tbody = document.getElementById('tabelaFuncionarios');
@@ -337,17 +375,17 @@
                     const isOk = statusLower === 'empregado' || statusLower === 'ativo';
                     const badgeClass = isOk ? 'bg-success' : 'bg-secondary';
                     return `
-                                <tr>
-                                    <td class="ps-4">#${idAtual}</td>
-                                    <td class="fw-bold">${f.nome}</td>
-                                    <td>${f.cargo}</td>
-                                    <td class="text-success fw-bold">R$ ${f.salario.toFixed(2)}</td>
-                                    <td><span class="badge ${badgeClass}">${f.status}</span></td>
-                                    <td class="text-center">
-                                        <button class="btn btn-sm btn-outline-warning me-1" onclick="prepararEdicaoFuncionario(${idAtual}, '${f.nome}', '${f.cargo}', ${f.salario}, '${f.status}')"><i class="bi bi-pencil"></i></button>
-                                        <button class="btn btn-sm btn-outline-danger" onclick="excluirFuncionario(${idAtual})"><i class="bi bi-trash"></i></button>
-                                    </td>
-                                </tr>`;
+                                    <tr>
+                                        <td class="ps-4">#${idAtual}</td>
+                                        <td class="fw-bold">${f.nome}</td>
+                                        <td>${f.cargo}</td>
+                                        <td class="text-success fw-bold">R$ ${f.salario.toFixed(2)}</td>
+                                        <td><span class="badge ${badgeClass}">${f.status}</span></td>
+                                        <td class="text-center">
+                                            <button class="btn btn-sm btn-outline-warning me-1" onclick="prepararEdicaoFuncionario(${idAtual}, '${f.nome}', '${f.cargo}', ${f.salario}, '${f.status}')"><i class="bi bi-pencil"></i></button>
+                                            <button class="btn btn-sm btn-outline-danger" onclick="excluirFuncionario(${idAtual})"><i class="bi bi-trash"></i></button>
+                                        </td>
+                                    </tr>`;
                 }).join('');
             } catch (err) { console.error(err); }
         }
@@ -372,18 +410,24 @@
                     body: JSON.stringify(payload)
                 });
                 if (res.ok) {
+                    mostrarToast(id ? "Funcionário atualizado!" : "Funcionário contratado!", "success");
                     cancelarEdicaoFuncionario();
                     carregarFuncionarios();
                 } else {
-                    alert("Erro ao salvar dados do funcionário.");
+                    mostrarToast("Erro ao salvar dados do funcionário.", "warning");
                 }
-            } catch (err) { alert("Erro ao salvar funcionário."); }
+            } catch (err) { mostrarToast("Erro de conexão.", "danger"); }
         });
 
         async function excluirFuncionario(id) {
             if (!confirm("Demitir funcionário?")) return;
-            await fetch(`${BASE_URL}/Funcionario/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('pokeToken')}` } });
-            carregarFuncionarios();
+            try {
+                const res = await fetch(`${BASE_URL}/Funcionario/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('pokeToken')}` } });
+                if (res.ok) {
+                    mostrarToast("Funcionário demitido com sucesso.", "success");
+                    carregarFuncionarios();
+                } else { mostrarToast("Erro ao remover funcionário.", "warning"); }
+            } catch (e) { mostrarToast("Erro de conexão.", "danger"); }
         }
 
         function prepararEdicaoFuncionario(id, nome, cargo, salario, status) {
@@ -404,7 +448,7 @@
         }
 
         // ==========================
-        // LÓGICA DE PEDIDOS (EDITÁVEL!)
+        // LÓGICA DE PEDIDOS
         // ==========================
         async function carregarPedidos() {
             const tbody = document.getElementById('tabelaPedidos');
@@ -420,16 +464,16 @@
                     if (p.statusPedido === "Cancelado") badgeColor = "bg-danger";
 
                     return `
-                                <tr>
-                                    <td><strong>#${p.idPedido}</strong></td>
-                                    <td>${p.cliente ? p.cliente.nome : 'Anônimo'} (ID: ${p.idCliente})</td>
-                                    <td>${new Date(p.dataPedido).toLocaleDateString()}</td>
-                                    <td><span class="badge ${badgeColor}">${p.statusPedido || 'Pendente'}</span></td>
-                                    <td class="text-center">
-                                        <button class="btn btn-sm btn-outline-warning me-1" onclick="prepararEdicaoPedido(${p.idPedido}, ${p.idCliente}, ${p.idFuncionario}, '${p.statusPedido}')"><i class="bi bi-pencil"></i></button>
-                                        <button class="btn btn-sm btn-outline-danger" onclick="excluirPedido(${p.idPedido})"><i class="bi bi-trash"></i></button>
-                                    </td>
-                                </tr>`;
+                                    <tr>
+                                        <td><strong>#${p.idPedido}</strong></td>
+                                        <td>${p.cliente ? p.cliente.nome : 'Anônimo'} (ID: ${p.idCliente})</td>
+                                        <td>${new Date(p.dataPedido).toLocaleDateString()}</td>
+                                        <td><span class="badge ${badgeColor}">${p.statusPedido || 'Pendente'}</span></td>
+                                        <td class="text-center">
+                                            <button class="btn btn-sm btn-outline-warning me-1" onclick="prepararEdicaoPedido(${p.idPedido}, ${p.idCliente}, ${p.idFuncionario}, '${p.statusPedido}')"><i class="bi bi-pencil"></i></button>
+                                            <button class="btn btn-sm btn-outline-danger" onclick="excluirPedido(${p.idPedido})"><i class="bi bi-trash"></i></button>
+                                        </td>
+                                    </tr>`;
                 }).join('');
             } catch (e) { console.error("Erro ao carregar pedidos"); }
         }
@@ -447,7 +491,7 @@
             e.preventDefault();
             const id = document.getElementById('idPedido').value;
 
-            if (!id) { alert("Selecione um pedido na tabela clicando no ícone do lápis para editar."); return; }
+            if (!id) { mostrarToast("Selecione um pedido na tabela para editar.", "warning"); return; }
 
             const payload = {
                 idCliente: parseInt(document.getElementById('pedidoIdCliente').value),
@@ -462,16 +506,22 @@
                     body: JSON.stringify(payload)
                 });
                 if (res.ok) {
+                    mostrarToast("Status do pedido atualizado!", "success");
                     limparFormPedido();
                     carregarPedidos();
-                } else { alert("Erro ao salvar alterações do pedido."); }
-            } catch (err) { alert("Erro de conexão."); }
+                } else { mostrarToast("Erro ao salvar alterações do pedido.", "warning"); }
+            } catch (err) { mostrarToast("Erro de conexão.", "danger"); }
         });
 
         async function excluirPedido(id) {
             if (!confirm("Deseja cancelar/excluir este pedido permanentemente?")) return;
-            await fetch(`${BASE_URL}/Pedido/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('pokeToken')}` } });
-            carregarPedidos();
+            try {
+                const res = await fetch(`${BASE_URL}/Pedido/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('pokeToken')}` } });
+                if (res.ok) {
+                    mostrarToast("Pedido removido com sucesso.", "success");
+                    carregarPedidos();
+                } else { mostrarToast("Erro ao cancelar pedido.", "warning"); }
+            } catch (e) { mostrarToast("Erro de conexão.", "danger"); }
         }
 
         function limparFormPedido() {
