@@ -75,7 +75,7 @@ builder.Services.AddScoped<PedidoService>();
 // 6. BANCO DE DADOS
 var connectionString = builder.Configuration.GetConnectionString("RestauranteConnection");
 builder.Services.AddDbContext<RestauranteDbContext>(options =>
-    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
+    options.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 4, 8))));
 
 var app = builder.Build();
 
