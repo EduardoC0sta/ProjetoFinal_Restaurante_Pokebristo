@@ -1,3 +1,6 @@
 <Solution>
+  <Folder Name="/Itens de Solução/">
+    <File Path="Dockerfile" />
+  </Folder>
   <Project Path="Sprint3/Sprint3.csproj" />
 </Solution>
