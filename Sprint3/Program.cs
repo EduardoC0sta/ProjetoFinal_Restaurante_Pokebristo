@@ -51,10 +51,14 @@ builder.Services.AddAuthentication(x => {
     };
 });
 
-// 4. CORS
-builder.Services.AddCors(options => {
-    options.AddPolicy("LiberarGeral", policy => {
-        policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+// 4. CORS (Configurando a política com o nome exato)
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowVercel", policy =>
+    {
+        policy.WithOrigins("https://projeto-final-restaurante-pokebrist.vercel.app")
+              .AllowAnyMethod()
+              .AllowAnyHeader();
     });
 });
 
@@ -64,7 +68,6 @@ builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
 builder.Services.AddScoped<IFuncionarioRepository, FuncionarioRepository>();
 builder.Services.AddScoped<IPedidoRepository, PedidoRepository>();
 
-// Serviços essenciais para a arquitetura robusta funcionar
 builder.Services.AddScoped<CardapioService>();
 builder.Services.AddScoped<FuncionarioService>();
 builder.Services.AddScoped<PedidoService>();
@@ -77,7 +80,8 @@ builder.Services.AddDbContext<RestauranteDbContext>(options =>
 var app = builder.Build();
 
 // MIDDLEWARES
-app.UseCors("LiberarGeral");
+// CORRIGIDO: Agora chamando o nome exato "AllowVercel" antes da autenticação
+app.UseCors("AllowVercel");
 
 if (app.Environment.IsDevelopment())
 {
@@ -86,7 +90,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseStaticFiles(); // Serve os arquivos HTML da pasta wwwroot
+app.UseStaticFiles();
 
 app.UseAuthentication();
 app.UseAuthorization();
