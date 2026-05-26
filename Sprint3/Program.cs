@@ -76,11 +76,10 @@ builder.Services.AddScoped<PedidoService>();
 var connectionString = builder.Configuration.GetConnectionString("RestauranteConnection");
 builder.Services.AddDbContext<RestauranteDbContext>(options =>
     options.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 4, 8))));
-//
+
 var app = builder.Build();
 
 // MIDDLEWARES
-// CORRIGIDO: Agora chamando o nome exato "AllowVercel" antes da autenticação
 app.UseCors("AllowVercel");
 
 if (app.Environment.IsDevelopment())
@@ -97,4 +96,12 @@ app.UseAuthorization();
 
 // MAPEAMENTO DE CONTROLLERS
 app.MapControllers();
+
+// SCRIPT MÁGICO: Cria as tabelas automaticamente na nuvem se não existirem
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<RestauranteDbContext>();
+    context.Database.EnsureCreated();
+}
+
 app.Run();
