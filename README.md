@@ -1,186 +1,78 @@
-# \# PokéBistro - Sistema Integrado de Gestão de Restaurante
+# 🍳 PokéBistro - Sistema Integrado de Gestão de Restaurante
 
-# 
+![.NET 8.0](https://img.shields.io/badge/.NET-8.0-purple?style=for-the-badge&logo=dotnet)
+![MySQL](https://img.shields.io/badge/MySQL-8.4-blue?style=for-the-badge&logo=mysql&logoColor=white)
+![Bootstrap 5](https://img.shields.io/badge/Bootstrap-5.3-7952B3?style=for-the-badge&logo=bootstrap&logoColor=white)
+![Render](https://img.shields.io/badge/Render-Hosted-black?style=for-the-badge&logo=render&logoColor=white)
+![Vercel](https://img.shields.io/badge/Vercel-Deployed-white?style=for-the-badge&logo=vercel&logoColor=black)
 
-# Este repositório contém o ecossistema de software do \*\*PokéBistro\*\*, uma aplicação full-stack projetada para otimizar o atendimento, gerenciamento de cardápios, controle de colaboradores e fluxo de pedidos de um estabelecimento gastronômico temático. 
+O **PokéBistro** é um ecossistema de software completo (Full-Stack) projetado para otimizar o autoatendimento, gerenciamento de cardápios, controle de colaboradores e fluxo de ordens de serviço de um estabelecimento gastronômico temático.
 
-# 
+A arquitetura conta com um backend robusto em C# estruturado com serviços, repositórios e autenticação segura, comunicando-se diretamente com um banco de dados relacional na nuvem e uma interface web fluida e responsiva.
 
-# O sistema é composto por uma arquitetura robusta no backend baseada em serviços e DTOs, integrada a uma interface responsiva e dinâmica no frontend.
+---
 
-# 
+## 🚀 Links do Sistema em Produção (Nuvem)
 
-# \---
+O ecossistema foi totalmente implantado em ambiente de produção e pode ser acessado de forma totalmente online pelos links abaixo:
 
-# 
+* **🛒 Portal do Cliente (Frontend):** [https://projeto-final-restaurante-pokebristo.vercel.app/cliente.html](https://projeto-final-restaurante-pokebristo.vercel.app/cliente.html)
+* **⚙️ Painel do Administrador (Frontend):** [https://projeto-final-restaurante-pokebristo.vercel.app/index.html](https://projeto-final-restaurante-pokebristo.vercel.app/index.html)
+* **💻 Servidor da API Backend (Render):** [https://projetofinal-restaurante-pokebristo.onrender.com](https://projetofinal-restaurante-pokebristo.onrender.com)
 
-# \## 1. Documentação Funcional (Regras de Negócio e Escopo)
+---
 
-# 
+## 🛠️ 1. Documentação Funcional (Regras de Negócio)
 
-# \### 1.1. Objetivo do Sistema
+### 1.1. Objetivo
+Centralizar o controle gerencial e a experiência de autoatendimento do usuário final, eliminando erros humanos de comunicação entre o salão, a cozinha e a administração financeira.
 
-# O PokéBistro foi desenvolvido para sanar as dores operacionais de estabelecimentos alimentícios, centralizando o controle gerencial (administração) e a experiência de autoatendimento do usuário final (cliente). O foco principal é a agilidade no tráfego de informações entre o salão, a cozinha e o caixa, eliminando falhas de comunicação humana.
+### 1.2. Regras de Negócio Críticas
+* **🔒 Proteção Administrativa:** Rotas de escrita, modificação e exclusão exigem a validação de um token JWT ativo gerado no login.
+* **🛡️ Conformidade com a LGPD:** O sistema captura dados sensíveis (CPF e Nome) apenas mediante consentimento explícito do usuário através de um checkbox obrigatório. O envio do pedido é bloqueado pela interface caso os termos não sejam aceitos.
+* **📈 Ciclo de Vida do Pedido:** Todo pedido inicia como `Pendente`, progredindo linearmente para `Em preparo`, `Entregue` ou `Cancelado`.
+* **💰 Integridade Financeira:** Bloqueio lógico contra a inserção de valores monetários negativos para preços de pratos e salários de colaboradores.
 
-# 
+---
 
-# \### 1.2. Funcionalidades Principais
+## 💻 2. Tecnologias e Arquitetura
 
-# \* \*\*Portal do Cliente (Autoatendimento):\*\* \* Consulta digital ao cardápio atualizado em tempo real.
+### Backend (API)
+* **Linguagem & Framework:** C# com ASP.NET Core Web API (.NET 8.0)
+* **ORM / Persistência:** Entity Framework Core (Abordagem Code-First)
+* **Banco de Dados:** MySQL 8.4 hospedado via Aiven Cloud
+* **Segurança:** Autenticação e Autorização via tokens criptografados JWT
 
-# &#x20; \* Sistema de carrinho de compras persistente localmente.
+### Frontend
+* **Interface:** HTML5, CSS3, Bootstrap 5.3 (Componentes fluidos e Toasts dinâmicos)
+* **Comunicação As síncrona:** JavaScript (ES6+) utilizando a API nativa `Fetch` para requisições assíncronas (AJAX) com tratamento de políticas de CORS.
 
-# &#x20; \* Fluxo de autocadastro e identificação automatizada via CPF.
+---
 
-# &#x20; \* Envio direto de pedidos para a fila de espera da cozinha.
+## 🔌 3. Endpoints da API (Catálogo de Serviços)
 
-# \* \*\*Painel Administrativo (Gestão Geral):\*\*
+| Módulo | Método | Rota | Descrição | Acesso |
+| :--- | :--- | :--- | :--- | :--- |
+| **Auth** | `POST` | `/api/Auth/login` | Autentica administradores e gera Token JWT | Público |
+| **ClienteAuth** | `POST` | `/api/ClienteAuth/identificar` | Identifica cliente por CPF ou faz o cadastro | Público |
+| **Cardapio** | `GET` | `/api/Cardapio` | Lista todos os pratos ativos | Público |
+| **Cardapio** | `POST` | `/api/Cardapio` | Cria um novo item culinário | Requer Token |
+| **Funcionario** | `GET` | `/api/Funcionario` | Lista todos os colaboradores ativos | Requer Token |
+| **Funcionario** | `POST` | `/api/Funcionario` | Registra a contratação de um colaborador | Requer Token |
+| **Pedido** | `POST` | `/api/Pedido` | Registra uma nova ordem de serviço | Público |
+| **Pedido** | `PUT` | `/api/Pedido/{id}` | Altera o status evolutivo na cozinha | Requer Token |
 
-# &#x20; \* Controle de acesso restrito via autenticação digital.
+---
 
-# &#x20; \* Gerenciamento completo de produtos (Cardápio).
+## 🛠️ 4. Instruções de Execução em Ambiente Local
 
-# &#x20; \* Administração de recursos humanos e folha de pagamento básica (Funcionários).
+Se desejar baixar o projeto e rodar na sua máquina local, siga os passos abaixo:
 
-# &#x20; \* Monitoramento, alteração de status e triagem da esteira de produção (Pedidos).
+### Pré-requisitos
+* .NET SDK 8.0 instalado.
+* Servidor MySQL ativo localmente.
 
-# 
-
-# \### 1.3. Diretrizes Operacionais e Regras de Negócio
-
-# \* \*\*Segurança de Acesso:\*\* Rotas administrativas de escrita, modificação e exclusão exigem a validação de um token de segurança ativo.
-
-# \* \*\*Consistência de Dados Financeiros:\*\* O sistema impede a inserção de valores monetários negativos tanto para a precificação de pratos quanto para a definição de salários de funcionários.
-
-# \* \*\*Ciclo de Vida do Pedido:\*\* Todo pedido inicia obrigatoriamente com o estado `Pendente`. Ele transiciona de forma linear para `Em preparo`, seguido de `Entregue` ou, em casos excepcionais, `Cancelado`.
-
-# \* \*\*Identificação do Consumidor:\*\* Para finalização de compras, o sistema exige a validação do CPF do cliente. Se o cadastro não constar na base de dados, a interface habilita dinamicamente a captura do nome completo para registro instantâneo.
-
-# 
-
-# \---
-
-# 
-
-# \## 2. Documentação Técnica (Arquitetura e Implementação)
-
-# 
-
-# \### 2.1. Tecnologias Utilizadas
-
-# 
-
-# \#### \*\*Backend (API):\*\*
-
-# \* \*\*Framework Principal:\*\* ASP.NET Core Web API (NET 8.0)
-
-# \* \*\*Persistência de Dados:\*\* Entity Framework Core (Abordagem Code-First / DbContext)
-
-# \* \*\*Driver do Banco de Dados:\*\* Pomelo.EntityFrameworkCore.MySql
-
-# \* \*\*Segurança:\*\* Autenticação e Autorização via tokens JWT (JSON Web Tokens)
-
-# \* \*\*Documentação Interativa:\*\* Swagger UI / OpenAPI
-
-# 
-
-# \#### \*\*Frontend:\*\*
-
-# \* \*\*Estrutura e Estilização:\*\* HTML5, CSS3, Bootstrap 5 (Layout fluido e Componentes de Feedback Visual)
-
-# \* \*\*Iconografia:\*\* Bootstrap Icons
-
-# \* \*\*Lógica e Comunicação As síncrona:\*\* JavaScript (ES6+) utilizando a API nativa `Fetch` para requisições assíncronas (AJAX).
-
-# 
-
-# \---
-
-# 
-
-# \## 3. Endpoints da API (Catálogo de Serviços)
-
-# 
-
-# A API expõe serviços estruturados sob o padrão RESTful. Abaixo constam os principais pontos de acesso mapeados:
-
-# 
-
-# \### Autenticação (`/api/Auth`)
-
-# \* `POST /api/Auth/login` - Valida credenciais administrativas e retorna o token de acesso.
-
-# 
-
-# \### Autenticação do Cliente (`/api/ClienteAuth`)
-
-# \* `POST /api/ClienteAuth/identificar` - Verifica a existência do cliente por CPF ou realiza o registro inicial.
-
-# 
-
-# \### Gestão do Cardápio (`/api/Cardapio`)
-
-# \* `GET /api/Cardapio` - Retorna a listagem de pratos ativos (Acesso público).
-
-# \* `POST /api/Cardapio` - Registra um novo item culinário (Requer Token).
-
-# \* `PUT /api/Cardapio/{id}` - Atualiza as especificações de um prato existente (Requer Token).
-
-# \* `DELETE /api/Cardapio/{id}` - Remove de forma lógica ou física um prato do menu (Requer Token).
-
-# 
-
-# \### Controle de Colaboradores (`/api/Funcionario`)
-
-# \* `GET /api/Funcionario` - Lista todos os funcionários e seus respectivos status de ocupação (Requer Token).
-
-# \* `POST /api/Funcionario` - Registra a contratação de um novo colaborador (Requer Token).
-
-# \* `PUT /api/Funcionario/{id}` - Modifica dados cadastrais, cargos ou salários (Requer Token).
-
-# \* `DELETE /api/Funcionario/{id}` - Realiza o desligamento administrativo do funcionário (Requer Token).
-
-# 
-
-# \### Fluxo de Vendas (`/api/Pedido`)
-
-# \* `GET /api/Pedido` - Exibe o mapa geral de ordens de serviço geradas no estabelecimento (Requer Token).
-
-# \* `POST /api/Pedido` - Cria uma nova requisição de consumo vinculando cliente e itens escolhidos.
-
-# \* `PUT /api/Pedido/{id}` - Altera o status evolutivo do pedido na cozinha (Requer Token).
-
-# \* `DELETE /api/Pedido/{id}` - Cancela permanentemente a ordem de serviço informada (Requer Token).
-
-# 
-
-# \---
-
-# 
-
-# \## 4. Instruções de Execução em Ambiente Local
-
-# 
-
-# \### Pré-requisitos
-
-# \* .NET SDK 8.0 instalado.
-
-# \* Servidor MySQL ativo (Local ou via container Docker).
-
-# 
-
-# \### Passos para Configuração
-
-# 1\. \*\*Configuração da Base de Dados:\*\*
-
-# &#x20;  Abra o arquivo `appsettings.json` localizado na raiz do projeto Web API e ajuste a string de conexão informando as credenciais do seu servidor MySQL:
-
-# &#x20;  ```json
-
-# &#x20;  "ConnectionStrings": {
-
-# &#x20;    "DefaultConnection": "Server=localhost;Database=PokebistroDb;Uid=SEU\_USUARIO;Pwd=SUA\_SENHA;"
-
-# &#x20;  }
-
+### Passo 1: Clonar o Repositório
+```bash
+git clone [https://github.com/EduardoC0sta/ProjetoFinal_Restaurante_Pokebristo.git](https://github.com/EduardoC0sta/ProjetoFinal_Restaurante_Pokebristo.git)
+cd ProjetoFinal_Restaurante_Pokebristo/Sprint3
