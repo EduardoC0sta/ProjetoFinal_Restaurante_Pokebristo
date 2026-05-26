@@ -76,7 +76,7 @@ builder.Services.AddScoped<PedidoService>();
 var connectionString = builder.Configuration.GetConnectionString("RestauranteConnection");
 builder.Services.AddDbContext<RestauranteDbContext>(options =>
     options.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 4, 8))));
-
+//
 var app = builder.Build();
 
 // MIDDLEWARES
